@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON转CSV工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .input-group .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .convert-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .convert-btn:hover {
+            background-color: #45a049;
+        }
+
+        .download-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .preview-section {
+            margin-top: 20px;
+        }
+
+        .preview-container {
+            max-height: 500px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .preview-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .preview-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .preview-table tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .error-message {
+            color: #f44336;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Custom scrollbar styles */
+        .preview-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .preview-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .preview-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .preview-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .expression-builder {
+            margin-bottom: 15px;
+        }
+
+        .expression-list {
+            margin-bottom: 10px;
+        }
+
+        .expression-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .expression-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+
+        .expression-row select,
+        .expression-row input[type="text"] {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .expression-row select {
+            min-width: 100px;
+        }
+
+        .expression-row input[type="text"] {
+            flex: 1;
+        }
+
+        .remove-expression {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .remove-expression:hover {
+            background-color: #cc0000;
+        }
+
+        .add-expression {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .add-expression:hover {
+            background-color: #45a049;
+        }
+
+        .preview-table tr.excluded {
+            background-color: #ffebee;
+        }
+
+        .preview-table tr.included {
+            background-color: #e8f5e9;
+        }
+
+        .fields-section {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .fields-container {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+        }
+
+        .fields-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .fields-search input {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 14px;
+        }
+
+        .fields-stats {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .fields-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .field-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            gap: 8px;
+        }
+
+        .field-item:hover {
+            background: #f0f0f0;
+        }
+
+        .field-item.selected {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+
+        .field-item .field-name {
+            flex: 1;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .field-item .field-type {
+            font-size: 12px;
+            color: #666;
+            padding: 2px 6px;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+
+        .field-item .field-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .field-item .field-status:contains('已包含') {
+            color: #4CAF50;
+            background: #E8F5E9;
+        }
+
+        .field-item .field-status:contains('已排除') {
+            color: #F44336;
+            background: #FFEBEE;
+        }
+
+        .preview-table th.excluded,
+        .preview-table td.excluded {
+            background-color: #ffebee;
+            color: #666;
+        }
+
+        .preview-table th.included,
+        .preview-table td.included {
+            background-color: #e8f5e9;
+            color: #000;
+        }
+
+        .find-array-btn {
+            background-color: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .find-array-btn:hover {
+            background-color: #F57C00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON转CSV工具</h1>
+        <div class="input-section">
+            <div class="input-group">
+                <label for="rootPath">根路径（可选）</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="rootPath" placeholder="例如：data.list.data">
+                    <button class="find-array-btn" onclick="findArrayPathUI()">查找数组路径</button>
+                </div>
+                <div class="help-text">指定要处理的JSON数据的特定路径。留空则处理整个JSON。</div>
+            </div>
+            <div class="input-group">
+                <label>字段过滤规则</label>
+                <div class="expression-builder">
+                    <div class="expression-list" id="expressionList">
+                        <!-- Expression rows will be added here -->
+                    </div>
+                    <button class="add-expression" onclick="addExpressionRow()">添加过滤规则</button>
+                </div>
+                <div class="help-text">定义规则来包含或排除特定字段。</div>
+            </div>
+            <textarea id="jsonInput" placeholder="在此粘贴JSON数据..."></textarea>
+            <div class="button-group">
+                <button id="convertBtn" onclick="convertToCSV()">转换为CSV</button>
+                <button id="downloadBtn" onclick="downloadCSV()" disabled>下载CSV</button>
+                <button id="formatJsonBtn" onclick="formatJSON()">格式化JSON</button>
+                <button id="compressJsonBtn" onclick="compressJSON()">压缩JSON</button>
+            </div>
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="preview-section">
+            <h2>预览</h2>
+            <div class="preview-container">
+                <div id="previewTable"></div>
+            </div>
+            <div class="fields-section">
+                <h2>可用字段列表</h2>
+                <div class="fields-container">
+                    <div class="fields-header">
+                        <div class="fields-search">
+                            <input type="text" id="fieldSearch" placeholder="搜索字段..." oninput="filterFields()">
+                        </div>
+                        <div class="fields-stats">
+                            <span id="fieldCount">0</span> 个字段
+                        </div>
+                    </div>
+                    <div class="fields-list" id="fieldsList">
+                        <!-- Fields will be listed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let csvData = null;
+        let expressions = [];
+        let allFields = [];
+
+        function createExpressionRow() {
+            const row = document.createElement('div');
+            row.className = 'expression-row';
+            
+            // Checkbox for enabling/disabling the rule
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true;
+            
+            // Action select (Include/Exclude)
+            const actionSelect = document.createElement('select');
+            actionSelect.innerHTML = `
+                <option value="include">包含</option>
+                <option value="exclude">排除</option>
+            `;
+            
+            // Operator select (Equals/Not Equals/Contains)
+            const operatorSelect = document.createElement('select');
+            operatorSelect.innerHTML = `
+                <option value="equals">等于</option>
+                <option value="notEquals">不等于</option>
+                <option value="contains">包含</option>
+            `;
+            
+            // Value input
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.placeholder = '输入字段名或模式';
+            
+            // Remove button
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-expression';
+            removeButton.textContent = '删除';
+            removeButton.onclick = () => {
+                row.remove();
+                updateExpressions();
+            };
+            
+            // Add all elements to row
+            row.appendChild(checkbox);
+            row.appendChild(actionSelect);
+            row.appendChild(operatorSelect);
+            row.appendChild(valueInput);
+            row.appendChild(removeButton);
+            
+            return row;
+        }
+
+        function addExpressionRow(defaultValue = '') {
+            const row = createExpressionRow();
+            const valueInput = row.querySelector('input[type="text"]');
+            valueInput.value = defaultValue;
+            
+            const expressionList = document.getElementById('expressionList');
+            expressionList.appendChild(row);
+        }
+
+        function updateExpressions() {
+            expressions = [];
+            const rows = document.querySelectorAll('.expression-row');
+            
+            rows.forEach(row => {
+                const [checkbox, actionSelect, operatorSelect, valueInput] = row.querySelectorAll('input, select');
+                if (checkbox.checked) {
+                    expressions.push({
+                        action: actionSelect.value,
+                        operator: operatorSelect.value,
+                        value: valueInput.value
+                    });
+                }
+            });
+        }
+
+        function findArrayPath(obj, currentPath = '') {
+            if (Array.isArray(obj)) {
+                return currentPath;
+            }
+            
+            if (typeof obj !== 'object' || obj === null) {
+                return null;
+            }
+            
+            for (const key in obj) {
+                const newPath = currentPath ? `${currentPath}.${key}` : key;
+                const result = findArrayPath(obj[key], newPath);
+                if (result) {
+                    return result;
+                }
+            }
+            
+            return null;
+        }
+
+        function findArrayPathUI() {
+            const jsonInput = document.getElementById('jsonInput').value;
+            const rootPathInput = document.getElementById('rootPath');
+            
+            try {
+                const data = JSON.parse(jsonInput);
+                const arrayPath = findArrayPath(data);
+                
+                if (arrayPath) {
+                    rootPathInput.value = arrayPath;
+                    // 自动更新字段列表
+                    updateFieldsList(data);
+                } else {
+                    alert('未找到数组路径');
+                }
+            } catch (error) {
+                alert('JSON格式错误，请检查输入');
+            }
+        }
+
+        function getFieldType(value) {
+            if (Array.isArray(value)) {
+                return '数组';
+            } else if (typeof value === 'object' && value !== null) {
+                return '对象';
+            } else if (value === null) {
+                return '空值';
+            } else {
+                return typeof value;
+            }
+        }
+
+        function updateFieldsList(data) {
+            const fieldsList = document.getElementById('fieldsList');
+            const fieldCount = document.getElementById('fieldCount');
+            fieldsList.innerHTML = '';
+            
+            // 获取根路径下的数据
+            const rootPath = document.getElementById('rootPath').value;
+            const targetData = getValueByPath(data, rootPath);
+            
+            if (targetData === null) {
+                fieldCount.textContent = '0';
+                return;
+            }
+            
+            // 获取根路径下的所有字段
+            const isArray = Array.isArray(targetData);
+            const items = isArray ? targetData : [targetData];
+            
+            // 获取所有字段
+            allFields = getAllKeys(items);
+            
+            // 更新字段计数
+            fieldCount.textContent = allFields.length;
+            
+            // 显示字段列表 - 显示根路径下的所有字段
+            allFields.forEach(field => {
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                
+                // 获取字段值类型
+                const value = getValueByPath(items[0], field);
+                const type = getFieldType(value);
+                
+                fieldItem.innerHTML = `
+                    <span class="field-name" title="${field}">${field}</span>
+                    <span class="field-type">${type}</span>
+                `;
+                
+                // 点击字段可以快速添加过滤规则
+                fieldItem.onclick = () => {
+                    addExpressionRow(field);
+                };
+                
+                fieldsList.appendChild(fieldItem);
+            });
+        }
+
+        function filterFields() {
+            const searchText = document.getElementById('fieldSearch').value.toLowerCase();
+            const fieldItems = document.querySelectorAll('.field-item');
+            
+            fieldItems.forEach(item => {
+                const fieldName = item.querySelector('.field-name').textContent.toLowerCase();
+                item.style.display = fieldName.includes(searchText) ? 'flex' : 'none';
+            });
+        }
+
+        function evaluateExpression(fieldName, expression) {
+            const { action, operator, value } = expression;
+            let matches = false;
+            
+            switch (operator) {
+                case 'equals':
+                    matches = fieldName === value;
+                    break;
+                case 'notEquals':
+                    matches = fieldName !== value;
+                    break;
+                case 'contains':
+                    matches = fieldName.toLowerCase().includes(value.toLowerCase());
+                    break;
+            }
+            
+            return matches;
+        }
+
+        function shouldIncludeField(fieldName) {
+            if (expressions.length === 0) return true;
+            
+            // 检查是否有包含规则匹配
+            const includeMatches = expressions.some(expr => 
+                expr.action === 'include' && evaluateExpression(fieldName, expr)
+            );
+            
+            // 如果有包含规则匹配，包含该字段（优先于排除规则）
+            if (includeMatches) return true;
+            
+            // 检查是否有排除规则匹配
+            const excludeMatches = expressions.some(expr => 
+                expr.action === 'exclude' && evaluateExpression(fieldName, expr)
+            );
+            
+            // 如果有排除规则匹配，排除该字段
+            if (excludeMatches) return false;
+            
+            // 检查是否只有包含规则
+            const hasOnlyIncludeRules = expressions.every(expr => expr.action === 'include');
+            
+            // 如果只有包含规则，未匹配的字段应该被排除
+            if (hasOnlyIncludeRules) return false;
+            
+            // 如果有排除规则，未匹配的字段应该被包含
+            return true;
+        }
+
+        function getValueByPath(obj, path) {
+            if (!path) return obj;
+            
+            return path.split('.').reduce((current, key) => {
+                return current && current[key] !== undefined ? current[key] : null;
+            }, obj);
+        }
+
+        function flattenObject(obj, prefix = '') {
+            const flattened = {};
+            
+            for (const key in obj) {
+                const value = obj[key];
+                const newKey = prefix ? `${prefix}.${key}` : key;
+                
+                if (Array.isArray(value)) {
+                    if (value.length === 0) {
+                        flattened[newKey] = '';
+                    } else if (typeof value[0] === 'object' && value[0] !== null) {
+                        // Handle array of objects
+                        const arrayFlattened = value.map((item, index) => {
+                            const itemFlattened = flattenObject(item, `${newKey}[${index}]`);
+                            return itemFlattened;
+                        });
+                        Object.assign(flattened, ...arrayFlattened);
+                    } else {
+                        // Handle array of primitives
+                        flattened[newKey] = value.join(',');
+                    }
+                } else if (typeof value === 'object' && value !== null) {
+                    // Handle nested objects
+                    Object.assign(flattened, flattenObject(value, newKey));
+                } else {
+                    flattened[newKey] = value;
+                }
+            }
+            
+            return flattened;
+        }
+
+        function getAllKeys(data) {
+            const keys = new Set();
+            
+            if (Array.isArray(data)) {
+                // 如果是数组，获取第一个元素的所有字段
+                if (data.length > 0) {
+                    const firstItem = data[0];
+                    if (typeof firstItem === 'object' && firstItem !== null) {
+                        const flattened = flattenObject(firstItem);
+                        Object.keys(flattened).forEach(key => keys.add(key));
+                    }
+                }
+            } else if (typeof data === 'object' && data !== null) {
+                // 如果是对象，获取所有字段
+                const flattened = flattenObject(data);
+                Object.keys(flattened).forEach(key => keys.add(key));
+            }
+            
+            return Array.from(keys);
+        }
+
+        function displayPreview(data, filteredKeys, allKeys) {
+            const previewTable = document.getElementById('previewTable');
+            let html = '<table class="preview-table"><thead><tr>';
+            
+            // Add headers - only show included fields
+            filteredKeys.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            // Add rows - only show included fields
+            data.forEach(row => {
+                html += '<tr>';
+                filteredKeys.forEach(header => {
+                    html += `<td>${row[header] || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            previewTable.innerHTML = html;
+        }
+
+        function convertToCSV() {
+            const jsonInput = document.getElementById('jsonInput').value;
+            const rootPath = document.getElementById('rootPath').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            try {
+                updateExpressions();
+                const data = JSON.parse(jsonInput);
+                const targetData = getValueByPath(data, rootPath);
+                
+                if (targetData === null) {
+                    throw new Error(`无效的根路径: ${rootPath}`);
+                }
+                
+                const isArray = Array.isArray(targetData);
+                const items = isArray ? targetData : [targetData];
+                
+                // Get all possible keys
+                const allKeys = getAllKeys(items);
+                
+                // Filter keys based on expressions
+                const filteredKeys = allKeys.filter(key => shouldIncludeField(key));
+                
+                if (filteredKeys.length === 0) {
+                    throw new Error('没有字段匹配过滤规则，请调整规则。');
+                }
+                
+                // Convert each item to flattened structure
+                const flattenedData = items.map(item => {
+                    const flattened = flattenObject(item);
+                    const row = {};
+                    allKeys.forEach(key => {
+                        row[key] = flattened[key] || '';
+                    });
+                    return row;
+                });
+                
+                // Create CSV content - only include filtered keys
+                const headers = filteredKeys.join(',');
+                const rows = flattenedData.map(row => 
+                    filteredKeys.map(key => {
+                        const value = row[key];
+                        // Escape commas and quotes in the value
+                        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                            return `"${value.replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    }).join(',')
+                );
+                
+                csvData = [headers, ...rows].join('\n');
+                
+                // Display preview - show all fields with different styles
+                displayPreview(flattenedData, filteredKeys, allKeys);
+                
+                // Update fields list
+                updateFieldsList(data);
+                
+                // Enable download button
+                downloadBtn.disabled = false;
+                
+                // Clear any error message
+                errorMessage.style.display = 'none';
+                
+            } catch (error) {
+                errorMessage.textContent = `错误: ${error.message}`;
+                errorMessage.style.display = 'block';
+                csvData = null;
+                downloadBtn.disabled = true;
+                document.getElementById('previewTable').innerHTML = '';
+            }
+        }
+
+        function downloadCSV() {
+            if (!csvData) return;
+            
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'converted.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function formatJSON() {
+            const jsonInput = document.getElementById('jsonInput');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            try {
+                const data = JSON.parse(jsonInput.value);
+                jsonInput.value = JSON.stringify(data, null, 2);
+                errorMessage.style.display = 'none';
+            } catch (error) {
+                errorMessage.textContent = `错误: ${error.message}`;
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function compressJSON() {
+            const jsonInput = document.getElementById('jsonInput');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            try {
+                const data = JSON.parse(jsonInput.value);
+                jsonInput.value = JSON.stringify(data);
+                errorMessage.style.display = 'none';
+            } catch (error) {
+                errorMessage.textContent = `错误: ${error.message}`;
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        // Initialize without any expression rows
+        document.addEventListener('DOMContentLoaded', () => {
+            // No initial expression row
+        });
+    </script>
+</body>
+</html> 
